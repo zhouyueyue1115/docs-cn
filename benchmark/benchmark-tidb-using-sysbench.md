@@ -6,13 +6,13 @@ aliases: ['/docs-cn/dev/benchmark/how-to-run-sysbench/']
 
 # 如何用 Sysbench 测试 TiDB
 
-本次测试使用的是 TiDB 3.0 Beta 和 Sysbench 1.0.14。建议使用 Sysbench 1.0 或之后的更新版本，可在 [Sysbench Release 1.0.14 页面](https://github.com/akopytov/sysbench/releases/tag/1.0.14)下载。
+本次测试使用的是 TiDB 4.0 和 Sysbench 1.0.14。建议使用 Sysbench 1.0 或之后的更新版本，可在 [Sysbench Release 1.0.14 页面](https://github.com/akopytov/sysbench/releases/tag/1.0.14)下载。
 
 ## 测试环境
 
 - [硬件要求](/hardware-and-software-requirements.md)
 
-- 参考 [TiDB 部署文档](https://pingcap.com/docs-cn/v3.0/how-to/deploy/orchestrated/ansible/)部署 TiDB 集群。在 3 台服务器的条件下，建议每台机器部署 1 个 TiDB，1 个 PD，和 1 个 TiKV 实例。关于磁盘，以 32 张表、每张表 10M 行数据为例，建议 TiKV 的数据目录所在的磁盘空间大于 512 GB。
+- 参考 [TiDB 部署文档](https://pingcap.com/docs-cn/v4.0/how-to/deploy/orchestrated/ansible/)部署 TiDB 集群。在 3 台服务器的条件下，建议每台机器部署 1 个 TiDB，1 个 PD，和 1 个 TiKV 实例。关于磁盘，以 32 张表、每张表 10M 行数据为例，建议 TiKV 的数据目录所在的磁盘空间大于 512 GB。
     对于单个 TiDB 的并发连接数，建议控制在 500 以内，如需增加整个系统的并发压力，可以增加 TiDB 实例，具体增加的 TiDB 个数视测试压力而定。
 
 IDC 机器：
@@ -59,7 +59,7 @@ enabled = true
 
 升高 TiKV 的日志级别同样有利于提高性能表现。
 
-由于 TiKV 是以集群形式部署的，在 Raft 算法的作用下，能保证大多数节点已经写入数据。因此，除了对数据安全极端敏感的场景之外，raftstore 中的 `sync-log` 选项可以关闭。
+由于 TiKV 是以集群形式部署的，在 Raft 算法的作用下，能保证大多数节点已经写入数据。在测试环境中，关闭 raftstore 中 `sync-log` 选项能有效提高写性能，实际生产环境，该值默认为 true，且为隐藏参数，不应该修改。
 
 TiKV 集群存在两个 Column Family（Default CF 和 Write CF），主要用于存储不同类型的数据。对于 Sysbench 测试，导入数据的 Column Family 在 TiDB 集群中的比例是固定的。这个比例是：
 
@@ -267,7 +267,7 @@ sysbench --config-file=config oltp_read_only --tables=32 --table-size=10000000 r
 
 TiKV 虽然整体 CPU 偏低，但部分模块的 CPU 可能已经达到了很高的利用率。
 
-TiKV 的其他模块，如 storage readpool、coprocessor 和 gRPC 的最大并发度限制是可以通过 TiKV 的配置文件进行调整的。
+TiKV 的其他模块，如 storage readpool、coprocessor（在 4.0 里面，readpool.unified 取代 storage readpool、coprocessor）和 gRPC 的最大并发度限制是可以通过 TiKV 的配置文件进行调整的。
 
 通过 Grafana 的 TiKV Thread CPU 监控面板可以观察到其实际使用率。如出现多线程模块瓶颈，可以通过增加该模块并发度进行调整。
 
